@@ -12,7 +12,11 @@ SECRET_KEY = 'django-insecure-replace-this-with-a-real-secret-key'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "restaurantbookingsystem-production-521e.up.railway.app",
+    "localhost",
+    "127.0.0.1",
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
