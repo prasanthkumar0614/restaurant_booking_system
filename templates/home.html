@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="introOverlay">
+    <canvas id="introCanvas"></canvas>
+    <div class="lantern-field" id="lanternField"></div>
+    <div class="intro-content">
+        {% if restaurant_profile.logo %}
+            <img src="{{ restaurant_profile.logo.url }}" class="intro-logo" alt="logo">
+        {% endif %}
+        <h1 class="intro-title">{{ restaurant_profile.name|default:"Beach Side Restaurant" }}</h1>
+        <p class="intro-subtitle">Experience Luxury Dining Beside the Ocean</p>
+        <button class="intro-btn" id="introEnterBtn">Visit Restaurant</button>
+    </div>
+</div>
+
+<section class="hero" id="mainHero" {% if restaurant_profile.banner_image %}style="background-image: linear-gradient(rgba(20,10,35,0.55), rgba(20,10,35,0.75)), url('{{ restaurant_profile.banner_image.url }}');"{% endif %}>
+    <div class="hero-content" id="heroContent">
+        <h1 id="heroTitle">{{ restaurant_profile.name|default:"Spice Route Restaurant" }}</h1>
+        <p class="hero-tagline" id="heroTagline">{{ restaurant_profile.tagline|default:"Book a table or order your favorite dishes online." }}</p>
+        <div class="hero-actions">
+            <a href="{% url 'menu_list' %}"><button class="btn-primary magnetic">View Menu</button></a>
+            <a href="{% url 'create_booking' %}"><button class="btn-outline magnetic">Book a Table</button></a>
+        </div>
+    </div>
+</section>
+
+<section class="about-section mask-reveal" id="aboutSection">
+    {% if restaurant_profile.description %}
+        <h2>About Us</h2>
+        <p>{{ restaurant_profile.description }}</p>
+    {% else %}
+        <h2>About Us</h2>
+        <p>Add a description in the admin panel to tell your story here.</p>
+    {% endif %}
+
+    <div class="stat-row">
+        <div class="stat-box"><div class="stat-num" data-target="12">0</div><div class="stat-label">Years Serving</div></div>
+        <div class="stat-box"><div class="stat-num" data-target="40">0</div><div class="stat-label">Signature Dishes</div></div>
+        <div class="stat-box"><div class="stat-num" data-target="4.8">0</div><div class="stat-label">Avg Rating</div></div>
+        <div class="stat-box"><div class="stat-num" data-target="5000">0</div><div class="stat-label">Happy Guests</div></div>
+    </div>
+</section>
+
+<script>
+document.body.classList.add('intro-active');
+
+// ---- Generate floating lanterns ----
+const lanternField = document.getElementById('lanternField');
+const lanternPositions = [6, 18, 30, 68, 80, 92];
+if (lanternField) {
+    lanternPositions.forEach(function (leftPct, i) {
+        const size = 34 + Math.random() * 22;
+        const duration = 14 + Math.random() * 10;
+        const delay = i * 1.8 + Math.random() * 2;
+        const swayDuration = 4 + Math.random() * 3;
+
+        const lantern = document.createElement('div');
+        lantern.className = 'lantern';
+        lantern.style.left = leftPct + '%';
+        lantern.style.width = size + 'px';
+        lantern.style.animationDuration = duration + 's, ' + swayDuration + 's';
+        lantern.style.animationDelay = delay + 's, 0s';
+
+        lantern.innerHTML = `
+            <svg viewBox="0 0 60 90" width="${size}" height="${size * 1.5}">
+                <ellipse class="lantern-glow" cx="30" cy="40" rx="26" ry="30" fill="url(#glowGrad${i})" />
+                <path d="M15 20 Q30 5 45 20 L42 65 Q30 78 18 65 Z" fill="url(#bodyGrad${i})" stroke="#ffb347" stroke-width="1.2" opacity="0.95"/>
+                <line x1="30" y1="5" x2="30" y2="20" stroke="#c9925a" stroke-width="1.5"/>
+                <line x1="30" y1="65" x2="30" y2="78" stroke="#c9925a" stroke-width="1.5"/>
+                <ellipse cx="30" cy="42" rx="10" ry="14" fill="#fff3d0" opacity="0.55"/>
+                <defs>
+                    <radialGradient id="glowGrad${i}" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#ffdb8a" stop-opacity="0.9"/>
+                        <stop offset="60%" stop-color="#ff9d3d" stop-opacity="0.35"/>
+                        <stop offset="100%" stop-color="#ff9d3d" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="bodyGrad${i}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffe8b8"/>
+                        <stop offset="100%" stop-color="#ffb347"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        `;
+        lanternField.appendChild(lantern);
+    });
+}
+
+// ================= THREE.JS: Cinematic Ocean Wave Scene =================
+const canvas = document.getElementById('introCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 3.2, 9);
+camera.lookAt(0, 0, 0);
+
+scene.add(new THREE.AmbientLight(0x6a4a9a, 0.8));
+const sunLight = new THREE.DirectionalLight(0xffd98a, 1.1);
+sunLight.position.set(-4, 5, 3);
+scene.add(sunLight);
+
+const waveGeo = new THREE.PlaneGeometry(30, 20, 80, 50);
+const waveMat = new THREE.MeshStandardMaterial({
+    color: 0x3a2a6a,
+    metalness: 0.3,
+    roughness: 0.35,
+    transparent: true,
+    opacity: 0.85,
+    side: THREE.DoubleSide
+});
+const wave = new THREE.Mesh(waveGeo, waveMat);
+wave.rotation.x = -Math.PI / 2.4;
+wave.position.y = -1.5;
+wave.position.z = -2;
+scene.add(wave);
+
+const wavePos = waveGeo.attributes.position;
+const waveOrig = Float32Array.from(wavePos.array);
+
+const particleCount = 140;
+const positions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 20;
+    positions[i * 3 + 1] = Math.random() * 6;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 12 - 2;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const pMat = new THREE.PointsMaterial({ color: 0xffe3b0, size: 0.05, transparent: true, opacity: 0.85 });
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+const clock = new THREE.Clock();
+
+function animateIntro() {
+    if (!document.getElementById('introOverlay')) return;
+    const t = clock.getElapsedTime();
+
+    const arr = wavePos.array;
+    for (let i = 0; i < arr.length; i += 3) {
+        const x = waveOrig[i];
+        const y = waveOrig[i + 1];
+        arr[i + 2] = Math.sin(x * 0.4 + t * 0.9) * 0.35 + Math.cos(y * 0.3 + t * 0.6) * 0.25;
+    }
+    wavePos.needsUpdate = true;
+    waveGeo.computeVertexNormals();
+
+    particles.rotation.y += 0.0006;
+    const pArr = pGeo.attributes.position.array;
+    for (let i = 1; i < pArr.length; i += 3) {
+        pArr[i] += 0.0025;
+        if (pArr[i] > 6) pArr[i] = 0;
+    }
+    pGeo.attributes.position.needsUpdate = true;
+
+    camera.position.x = Math.sin(t * 0.08) * 1.2;
+    camera.lookAt(0, 0.5, -2);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animateIntro);
+}
+animateIntro();
+
+window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ================= GSAP: intro entrance =================
+const introTitleEl = document.querySelector('.intro-title');
+const introWords = introTitleEl.textContent.trim().split(' ');
+introTitleEl.innerHTML = introWords.map(w => `<span class="word3d">${w}</span>`).join('');
+introTitleEl.style.opacity = 1;
+
+const introTl = gsap.timeline();
+introTl.to('.intro-logo', { opacity: 1, duration: 1, ease: 'power2.out' })
+  .to('.intro-title .word3d', {
+      opacity: 1, rotateX: 0, y: 0, duration: 0.9, stagger: 0.35, ease: 'back.out(1.6)'
+  }, '-=0.3')
+  .to('.intro-subtitle', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.2')
+  .to('.intro-btn', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.3');
+
+const introBtn = document.getElementById('introEnterBtn');
+introBtn.addEventListener('mousemove', function (e) {
+    const rect = introBtn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    gsap.to(introBtn, { x: x * 0.3, y: y * 0.4, duration: 0.3, ease: 'power2.out' });
+});
+introBtn.addEventListener('mouseleave', function () {
+    gsap.to(introBtn, { x: 0, y: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)' });
+});
+
+function splitIntoWords(el) {
+    const words = el.textContent.trim().split(' ');
+    el.innerHTML = words.map(w => `<span class="word">${w}&nbsp;</span>`).join('');
+}
+splitIntoWords(document.getElementById('heroTitle'));
+
+introBtn.addEventListener('click', function () {
+    const overlay = document.getElementById('introOverlay');
+    gsap.to(overlay, {
+        opacity: 0, scale: 1.08, duration: 0.9, ease: 'power2.inOut',
+        onComplete: function () {
+            overlay.remove();
+            document.body.classList.remove('intro-active');
+            playHeroEntrance();
+        }
+    });
+});
+
+function playHeroEntrance() {
+    const tl = gsap.timeline();
+    tl.to('.hero .word', { opacity: 1, y: 0, rotateX: 0, duration: 0.7, stagger: 0.08, ease: 'power3.out' })
+      .to('#heroTagline', { opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.3')
+      .to('.hero-actions .btn-primary, .hero-actions .btn-outline', { opacity: 1, duration: 0.6, stagger: 0.15, ease: 'power2.out' }, '-=0.2');
+}
+
+const hero = document.getElementById('mainHero');
+const heroContent = document.getElementById('heroContent');
+hero.addEventListener('mousemove', function (e) {
+    const rect = hero.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    gsap.to(heroContent, { rotateY: x * 6, rotateX: -y * 6, duration: 0.6, ease: 'power2.out' });
+});
+hero.addEventListener('mouseleave', function () {
+    gsap.to(heroContent, { rotateY: 0, rotateX: 0, duration: 0.6, ease: 'power2.out' });
+});
+
+document.querySelectorAll('.magnetic').forEach(function (btn) {
+    btn.addEventListener('mousemove', function (e) {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(btn, { x: x * 0.25, y: y * 0.35, duration: 0.3, ease: 'power2.out' });
+    });
+    btn.addEventListener('mouseleave', function () {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)' });
+    });
+});
+
+const aboutObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            document.querySelectorAll('.stat-num').forEach(function (num) {
+                const target = parseFloat(num.getAttribute('data-target'));
+                const obj = { val: 0 };
+                gsap.to(obj, {
+                    val: target, duration: 1.6, ease: 'power2.out',
+                    onUpdate: function () {
+                        num.textContent = target % 1 !== 0 ? obj.val.toFixed(1) : Math.floor(obj.val);
+                    }
+                });
+            });
+            aboutObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+aboutObserver.observe(document.getElementById('aboutSection'));
+</script>
+{% endblock %}

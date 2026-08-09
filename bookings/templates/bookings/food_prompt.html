@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ booking.booking_name }} — Table {{ booking.table.table_number }}</h2>
+<p>{{ booking.date }} at {{ booking.time_slot }} — {{ booking.guests }} guests</p>
+
+<div style="border:1px solid #eee; border-radius:14px; padding:22px; margin:20px 0;">
+    <h3>Your Food Items</h3>
+    {% for order in booking.orders.all %}
+        <ul>
+        {% for item in order.items.all %}
+            <li>{{ item.quantity }} x {{ item.menu_item.name }} — ₹{{ item.subtotal }}</li>
+        {% endfor %}
+        </ul>
+        <p>Food total: ₹{{ order.total_price }}</p>
+    {% empty %}
+        <p>No food items added yet.</p>
+    {% endfor %}
+    <a href="{% url 'menu_list' %}?booking={{ booking.id }}"><button>Add / Edit Food Items</button></a>
+</div>
+
+<div style="border:1px solid #eee; border-radius:14px; padding:22px; margin:20px 0;">
+    <h3>Table Advance</h3>
+    {% if booking.advance_paid %}
+        <p style="color:#1e6b34;">✔ ₹100 advance paid — table fully confirmed.</p>
+    {% else %}
+        <p style="color:#a33; margin-bottom:12px;">₹100 advance required to confirm this table.</p>
+        <a href="{% url 'pay_booking' booking.id %}"><button>Pay ₹100 Table Advance</button></a>
+    {% endif %}
+</div>
+
+<div style="border:1px solid #eee; border-radius:14px; padding:22px; margin:20px 0;">
+    <h3>Food Payment</h3>
+    {% for order in booking.orders.all %}
+        {% if not order.is_paid and order.items.all %}
+            <a href="{% url 'pay_order' order.id %}"><button>Pay ₹{{ order.total_price }} for Food</button></a>
+            <p style="font-size:12px; color:#888; margin-top:8px;">Or pay anytime later from My Orders.</p>
+        {% endif %}
+    {% endfor %}
+    {% if not booking.orders.all %}
+        <p>No food items yet — add some above, or skip and pay later from My Orders.</p>
+    {% endif %}
+</div>
+
+<a href="{% url 'order_history' %}"><button style="background:#2ec4b6;">Go to My Orders</button></a>
+{% endblock %}

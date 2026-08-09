@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Check Table Availability</h2>
+<form method="get">
+    <label>Date: <input type="date" name="date" value="{{ selected_date|default:'' }}"></label>
+    <button type="submit">Check</button>
+</form>
+
+{% if selected_date %}
+    <h3>Availability on {{ selected_date }}</h3>
+    <table>
+        <tr><th>Table</th><th>Status</th><th>Booked Times</th></tr>
+        {% for row in availability %}
+        <tr>
+            <td>{{ row.table }}</td>
+            <td>{% if row.is_free_now %}Free all day{% else %}Partially booked{% endif %}</td>
+            <td>{{ row.booked_times|join:", " }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">No tables found.</td></tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'create_booking' %}"><button>Book a Table</button></a>
+{% endif %}
+{% endblock %}

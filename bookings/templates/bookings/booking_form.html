@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Book a Table</h2>
+<p style="background:#f3edf9; padding:12px 16px; border-radius:10px;">
+    A ₹100 advance payment is required to fully confirm your table booking.
+</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Confirm Booking</button>
+</form>
+{% endblock %}

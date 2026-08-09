@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Orders</h2>
+
+<h3>Table Bookings</h3>
+{% for booking in bookings %}
+    <div style="border:1px solid #ccc; padding:12px; margin-bottom:12px; border-radius:6px;">
+        <p><strong>{{ booking.booking_name }}</strong> — {{ booking.table }} — {{ booking.date }} at {{ booking.time_slot }} — {{ booking.get_status_display }}
+{% if not booking.advance_paid %} — <span style="color:#a33;">Advance unpaid</span>{% else %} — <span style="color:#1e6b34;">Advance paid</span>{% endif %}</p>
+{% if not booking.advance_paid %}
+    <a href="{% url 'pay_booking' booking.id %}"><button style="background:#ffb347; color:#2b1642;">Pay Advance</button></a>
+{% endif %}
+
+        {% for order in booking.orders.all %}
+            <ul>
+            {% for item in order.items.all %}
+                <li>{{ item.quantity }} x {{ item.menu_item.name }} — ₹{{ item.subtotal }}</li>
+            {% endfor %}
+            </ul>
+            <p>Food total for this booking: ₹{{ order.total_price }}
+            {% if order.is_paid %} — <span style="color:#1e6b34;">Paid</span>{% else %} — <span style="color:#a33;">Unpaid</span>{% endif %}</p>
+            {% if not order.is_paid and order.items.all %}
+                <a href="{% url 'pay_order' order.id %}"><button>Pay for Food Order</button></a>
+            {% endif %}
+        {% empty %}
+            <p>No food items added yet for this booking.</p>
+        {% endfor %}
+
+        <a href="{% url 'menu_list' %}?booking={{ booking.id }}"><button>Add Food Items</button></a>
+
+        {% if booking.status != 'cancelled' %}
+        <form method="post" action="{% url 'cancel_booking' booking.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="background:#a33;" onclick="return confirm('Cancel this booking?');">Cancel Booking</button>
+        </form>
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No upcoming table bookings.</p>
+{% endfor %}
+<p><a href="{% url 'create_booking' %}">Book a table</a></p>
+
+<h3>Other Food Orders (not tied to a booking)</h3>
+{% for order in standalone_orders %}
+    <h4>Order #{{ order.id }} ({{ order.get_status_display }})</h4>
+    <ul>
+        {% for item in order.items.all %}
+            <li>{{ item.quantity }} x {{ item.menu_item.name }} — ₹{{ item.subtotal }}</li>
+        {% endfor %}
+    </ul>
+    <p><strong>Total: ₹{{ order.total_price }}</strong></p>
+{% empty %}
+    <p>None.</p>
+{% endfor %}
+{% endblock %}

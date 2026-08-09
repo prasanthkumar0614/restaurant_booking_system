@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pay-wrap">
+    <div class="pay-card" id="payCard">
+        <div class="pay-card-face pay-card-front">
+            <p class="pay-label">{{ label }}</p>
+            <h2 class="pay-amount">₹{{ amount }}</h2>
+
+            <form method="post" id="payForm">
+                {% csrf_token %}
+                <div class="pay-field">
+                    <input type="text" id="cardName" placeholder=" " maxlength="40" required>
+                    <label>Cardholder Name</label>
+                </div>
+                <div class="pay-field">
+                    <input type="text" id="cardNumber" placeholder=" " maxlength="19" required>
+                    <label>Card Number</label>
+                </div>
+                <div class="pay-row">
+                    <div class="pay-field">
+                        <input type="text" id="cardExpiry" placeholder=" " maxlength="5" required>
+                        <label>MM/YY</label>
+                    </div>
+                    <div class="pay-field">
+                        <input type="text" id="cardCvv" placeholder=" " maxlength="3" required>
+                        <label>CVV</label>
+                    </div>
+                </div>
+                <button type="submit" class="pay-btn" id="payBtn">
+                    <span id="payBtnText">Pay ₹{{ amount }}</span>
+                    <span id="paySpinner" class="pay-spinner"></span>
+                </button>
+                <p class="pay-note">This is a simulated payment for demo purposes. No real transaction occurs.</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="pay-success" id="paySuccess">
+        <div class="pay-check">
+            <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" fill="none"/><path fill="none" d="M14 27l7 7 16-16"/></svg>
+        </div>
+        <h2>Payment Successful</h2>
+        <p>₹{{ amount }} paid securely.</p>
+    </div>
+</div>
+
+<script>
+const cardNumber = document.getElementById('cardNumber');
+cardNumber.addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 16);
+    this.value = v.replace(/(.{4})/g, '$1 ').trim();
+});
+const cardExpiry = document.getElementById('cardExpiry');
+cardExpiry.addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+    this.value = v;
+});
+document.getElementById('cardCvv').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 3);
+});
+
+const payForm = document.getElementById('payForm');
+const payBtn = document.getElementById('payBtn');
+const payBtnText = document.getElementById('payBtnText');
+const paySpinner = document.getElementById('paySpinner');
+const payCard = document.getElementById('payCard');
+const paySuccess = document.getElementById('paySuccess');
+
+payForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    payBtn.disabled = true;
+    payBtnText.style.opacity = 0;
+    paySpinner.style.display = 'inline-block';
+
+    gsap.to(payCard, { rotateY: 10, duration: 0.3 });
+
+    setTimeout(function () {
+        gsap.to(payCard, {
+            opacity: 0, scale: 0.92, duration: 0.5, ease: 'power2.inOut',
+            onComplete: function () {
+                payCard.style.display = 'none';
+                paySuccess.classList.add('show');
+                gsap.fromTo(paySuccess, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' });
+                gsap.fromTo('.pay-check svg path', { strokeDasharray: 40, strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: 0.6, delay: 0.2, ease: 'power2.out' });
+
+                setTimeout(function () {
+                    payForm.submit();
+                }, 1400);
+            }
+        });
+    }, 1600);
+});
+</script>
+{% endblock %}

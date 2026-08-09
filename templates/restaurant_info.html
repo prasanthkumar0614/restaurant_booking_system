@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Restaurant Info</h2>
+
+{% if exterior_images %}
+    <h3>Exterior</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; margin-bottom:30px;">
+        {% for img in exterior_images %}
+            <div>
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="gallery-img" data-caption="{{ img.caption }}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; cursor:pointer;">
+                {% if img.caption %}<p style="font-weight:600; color:#2b2033; margin:8px 0 0;">{{ img.caption }}</p>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if interior_images %}
+    <h3>Interior</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; margin-bottom:30px;">
+        {% for img in interior_images %}
+            <div>
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="gallery-img" data-caption="{{ img.caption }}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; cursor:pointer;">
+                {% if img.caption %}<p style="font-weight:600; color:#2b2033; margin:8px 0 0;">{{ img.caption }}</p>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if general_images %}
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; margin-bottom:30px;">
+        {% for img in general_images %}
+            <div>
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="gallery-img" data-caption="{{ img.caption }}" style="width:100%; height:180px; object-fit:cover; border-radius:12px; cursor:pointer;">
+                {% if img.caption %}<p style="font-weight:600; color:#2b2033; margin:8px 0 0;">{{ img.caption }}</p>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if profile %}
+    {% if profile.logo %}
+        <img src="{{ profile.logo.url }}" alt="logo" width="80" height="80" style="border-radius:50%; object-fit:cover; margin-bottom:16px;">
+    {% endif %}
+
+    <h3>{{ profile.name }}</h3>
+    {% if profile.tagline %}<p><em>{{ profile.tagline }}</em></p>{% endif %}
+    {% if profile.description %}<p>{{ profile.description }}</p>{% endif %}
+
+    <p>📍 <strong>Address:</strong> {{ profile.address }}</p>
+    <p>📞 <strong>Contact:</strong> {{ profile.contact_number }}</p>
+    <p>✉️ <strong>Email:</strong> {{ profile.email }}</p>
+    <p>⏰ <strong>Hours:</strong> {{ profile.opening_time }} – {{ profile.closing_time }}</p>
+{% else %}
+    <p>Restaurant info not added yet. Add it from the Django admin panel.</p>
+{% endif %}
+
+<div id="lightboxOverlay" style="display:none; position:fixed; inset:0; background:rgba(20,10,35,0.92); z-index:500; align-items:center; justify-content:center; flex-direction:column;">
+    <img id="lightboxImg" src="" style="max-width:88%; max-height:75vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <p id="lightboxCaption" style="color:white; margin-top:14px; font-size:16px;"></p>
+    <button id="lightboxPrev" style="position:fixed; left:24px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); border:none; color:white; width:48px; height:48px; border-radius:50%; font-size:22px; cursor:pointer;">‹</button>
+    <button id="lightboxNext" style="position:fixed; right:24px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); border:none; color:white; width:48px; height:48px; border-radius:50%; font-size:22px; cursor:pointer;">›</button>
+    <button id="lightboxClose" style="position:fixed; top:24px; right:24px; background:rgba(255,255,255,0.15); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer;">✕</button>
+</div>
+
+<script>
+const galleryImgs = Array.from(document.querySelectorAll('.gallery-img'));
+const overlay = document.getElementById('lightboxOverlay');
+const lightboxImg = document.getElementById('lightboxImg');
+const lightboxCaption = document.getElementById('lightboxCaption');
+let currentIndex = 0;
+
+function openLightbox(index) {
+    currentIndex = index;
+    updateLightbox();
+    overlay.style.display = 'flex';
+}
+function updateLightbox() {
+    const img = galleryImgs[currentIndex];
+    lightboxImg.src = img.src;
+    lightboxCaption.textContent = img.getAttribute('data-caption') || '';
+}
+function closeLightbox() {
+    overlay.style.display = 'none';
+}
+function showNext() {
+    currentIndex = (currentIndex + 1) % galleryImgs.length;
+    updateLightbox();
+}
+function showPrev() {
+    currentIndex = (currentIndex - 1 + galleryImgs.length) % galleryImgs.length;
+    updateLightbox();
+}
+
+galleryImgs.forEach(function (img, index) {
+    img.addEventListener('click', function () { openLightbox(index); });
+});
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+document.getElementById('lightboxNext').addEventListener('click', showNext);
+document.getElementById('lightboxPrev').addEventListener('click', showPrev);
+overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeLightbox();
+});
+document.addEventListener('keydown', function (e) {
+    if (overlay.style.display === 'flex') {
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowRight') showNext();
+        if (e.key === 'ArrowLeft') showPrev();
+    }
+});
+</script>
+{% endblock %}

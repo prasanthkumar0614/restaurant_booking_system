@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<canvas id="menuParticleBg"></canvas>
+<h2>{% if restaurant %}{{ restaurant.name }} — Menu{% else %}Our Menu{% endif %}</h2>
+
+{% if booking %}
+    <p class="menu-booking-banner">
+        Adding food items for your booking: <strong>{{ booking.table }}</strong> on {{ booking.date }} at {{ booking.time_slot }}
+    </p>
+    <a href="{% url 'food_prompt' booking.id %}"><button style="background:#ffb347; color:#2b1642; margin-bottom:20px;">Done</button></a>
+{% endif %}
+
+{% for category in categories %}
+    <h3 class="menu-category-title">{{ category.name }}</h3>
+    <ul class="menu-grid">
+        {% for item in category.items.all %}
+            <li class="menu-card tilt-card">
+                {% if item.image %}
+                    <div class="menu-card-img-wrap">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                    </div>
+                {% else %}
+                    <div class="menu-card-img-wrap no-image">No image</div>
+                {% endif %}
+                <div class="menu-card-body">
+                    {% if not item.is_available %}<span class="menu-card-out">Out of stock</span><br>{% endif %}
+                    <div class="menu-card-top">
+                        <h4 class="menu-card-name">{{ item.name }}</h4>
+                        <span class="menu-card-price">₹{{ item.price }}</span>
+                    <div class="menu-card-top">
+                        <h4 class="menu-card-name">                    </div>
+                    <p class="menu-card-desc">{{ item.description }}</p>
+                    {% if user.is_authenticated and booking %}
+                        <button type="button" class="add-to-cart-btn" data-item-id="{{ item.id }}" data-booking-id="{{ booking.id }}">Add to Cart</button>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% empty %}
+    <p>No menu items yet. Add some from the Django admin panel.</p>
+{% endfor %}
+
+<script>
+document.querySelectorAll('.tilt-card').forEach(function (card) {
+    card.addEventListener('mousemove', function (e) {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        gsap.to(card, {
+            rotateY: x * 18,
+            rotateX: -y * 18,
+            duration: 0.4,
+            ease: 'power2.out',
+            transformPerspective: 800
+        });
+    });
+    card.addEventListener('mouseleave', function () {
+        gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.5, ease: 'power2.out' });
+    });
+});
+
+const bgCanvas = document.getElementById('menuParticleBg');
+const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+bgRenderer.setSize(window.innerWidth, window.innerHeight);
+bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const bgScene = new THREE.Scene();
+const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+bgCamera.position.z = 10;
+const bgCount = 90;
+const bgPositions = new Float32Array(bgCount * 3);
+for (let i = 0; i < bgCount; i++) {
+    bgPositions[i * 3] = (Math.random() - 0.5) * 24;
+    bgPositions[i * 3 + 1] = (Math.random() - 0.5) * 18;
+    bgPositions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+}
+const bgGeo = new THREE.BufferGeometry();
+bgGeo.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
+const bgMat = new THREE.PointsMaterial({ color: 0xb98cf2, size: 0.06, transparent: true, opacity: 0.35 });
+const bgPoints = new THREE.Points(bgGeo, bgMat);
+bgScene.add(bgPoints);
+function animateMenuBg() {
+    bgPoints.rotation.y += 0.0004;
+    bgPoints.rotation.x += 0.0002;
+    bgRenderer.render(bgScene, bgCamera);
+    requestAnimationFrame(animateMenuBg);
+}
+animateMenuBg();
+window.addEventListener('resize', function () {
+    bgCamera.aspect = window.innerWidth / window.innerHeight;
+    bgCamera.updateProjectionMatrix();
+    bgRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const cards = document.querySelectorAll('.menu-card');
+cards.forEach(function (card, i) {
+    gsap.set(card, { opacity: 0, x: i % 2 === 0 ? -40 : 40, y: 20 });
+});
+const menuObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry, idx) {
+        if (entry.isIntersecting) {
+            gsap.to(entry.target, {
+                opacity: 1, x: 0, y: 0, duration: 0.7, ease: 'power3.out',
+                delay: (idx % 4) * 0.06
+            });
+            menuObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15 });
+cards.forEach(function (card) { menuObserver.observe(card); });
+</script>
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrfToken = getCookie('csrftoken');
+
+document.querySelectorAll('.add-to-cart-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        const itemId = btn.getAttribute('data-item-id');
+        const bookingId = btn.getAttribute('data-booking-id');
+        const originalText = btn.textContent;
+
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        fetch(`/orders/add/${itemId}/?booking=${bookingId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                btn.textContent = 'Added ✓ (x' + data.quantity + ')';
+                btn.style.background = '#2ec4b6';
+                setTimeout(function () {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                    btn.disabled = false;
+                }, 1200);
+            }
+        })
+        .catch(function () {
+            btn.textContent = 'Error — try again';
+            btn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}
