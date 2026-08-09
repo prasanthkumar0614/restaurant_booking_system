@@ -1,15 +1,9 @@
 """
 Django settings for restaurant_booking project.
 """
-
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# ============================================================
-# SECURITY
-# ============================================================
 
 SECRET_KEY = 'django-insecure-replace-this-with-a-real-secret-key'
 
