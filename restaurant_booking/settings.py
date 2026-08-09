@@ -1,6 +1,5 @@
 """
 Django settings for restaurant_booking project.
-Generated as a starter project for a fresher-level Django portfolio piece.
 """
 
 from pathlib import Path
@@ -21,7 +20,6 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
 ]
-
 
 CSRF_TRUSTED_ORIGINS = [
     'https://restaurantbookingsystem-production-521e.up.railway.app',
@@ -63,10 +61,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-# ============================================================
-# URL / WSGI
-# ============================================================
 
 ROOT_URLCONF = 'restaurant_booking.urls'
 
@@ -136,7 +130,6 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
-
 USE_TZ = True
 
 
