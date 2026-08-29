@@ -75,4 +75,4 @@ restaurant_booking/
 - Push to GitHub with a good README and screenshots — this is what recruiters look at
 
 ## Author
-Varukuti Venkata Thirupathi Rao
+sodima naga prasanth kumar
