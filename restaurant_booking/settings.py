@@ -9,11 +9,15 @@ SECRET_KEY = 'django-insecure-replace-this-with-a-real-secret-key'
 
 DEBUG = True
 
+import os
+
 ALLOWED_HOSTS = [
-    'restaurantbookingsystem-production-521e.up.railway.app',
     'localhost',
     '127.0.0.1',
 ]
+
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 
 CSRF_TRUSTED_ORIGINS = [
     'https://restaurantbookingsystem-production-521e.up.railway.app',
